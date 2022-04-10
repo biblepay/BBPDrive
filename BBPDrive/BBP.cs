@@ -72,7 +72,7 @@ namespace BBPDrive
                         else
                         {
                             long nElapsed = Common.UnixTimestamp() - entry.Value;
-                            if (nElapsed > 10 && entry.Value != 9)
+                            if (nElapsed > 10 && entry.Value != 9 && entry.Value != 0)
                             {
                                 // After ten seconds of idle (this ensures file is not being written to), we shoot out the file to the Sanc, and we clear the timestamp.
                                 dOutboundQueue[entry.Key] = 0;
