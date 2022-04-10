@@ -32,10 +32,7 @@ namespace BBPDrive
                     }
                 }
 
-                System.Threading.Thread tInbound = new System.Threading.Thread(BBP.InboundThread);
-                tInbound.Start();
-                System.Threading.Thread tOutbound = new System.Threading.Thread(BBP.OutboundThread);
-                tOutbound.Start();
+                
 
                 // Examples:
                 // MountDrive = N:\\
@@ -43,12 +40,19 @@ namespace BBPDrive
 
                 Dokan.Init();
 
+                System.Threading.Thread tInbound = new System.Threading.Thread(BBP.InboundThread);
+                tInbound.Start();
+                System.Threading.Thread tOutbound = new System.Threading.Thread(BBP.OutboundThread);
+                tOutbound.Start();
+
                 using (DokanInstance dokanInstance = mirror.CreateFileSystem(BBP.MountDrive, DokanOptions.DebugMode | DokanOptions.EnableNotificationAPI))
                 {
                     var notify = new Notify();
                     notify.Start(BBP.GetMountPoint(), BBP.MountDrive, dokanInstance);
                     dokanInstance.WaitForFileSystemClosed(uint.MaxValue);
                 }
+
+
 
                 Dokan.Shutdown();
 

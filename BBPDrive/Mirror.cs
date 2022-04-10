@@ -309,6 +309,9 @@ namespace BBPDrive
                 }
                 else
                 {
+                    // BBP
+                    BBP.AddOutboundQueue(fileName,true);
+
                     File.Delete(GetPath(fileName));
                 }
             }
@@ -574,7 +577,8 @@ namespace BBPDrive
                     else
                     {
                         File.Move(oldpath, newpath);
-                        BBP.AddOutboundQueue(newName);
+                        BBP.AddOutboundQueue(newName, false);
+                        BBP.AddOutboundQueue(oldName, true);
                     }
                     return Trace(nameof(MoveFile), oldName, info, DokanResult.Success, newName,
                         replace.ToString(CultureInfo.InvariantCulture));
@@ -589,7 +593,8 @@ namespace BBPDrive
 
                     File.Delete(newpath);
                     File.Move(oldpath, newpath);
-                    BBP.AddOutboundQueue(newName);
+                    BBP.AddOutboundQueue(newName, false);
+                    BBP.AddOutboundQueue(oldName, true);
 
                     return Trace(nameof(MoveFile), oldName, info, DokanResult.Success, newName,
                         replace.ToString(CultureInfo.InvariantCulture));

@@ -13,12 +13,11 @@ namespace BBPIO
         public static class BBP
         {
 
-            public async static Task<bool> UploadFileToSanc(string sCDN, string sAPIKey, string sFilePath, string sURL)
+            public async static Task<bool> UploadFileToSanc(string sCDN, string sAPIKey, string sFilePath, string sURL, bool fDeleteFile)
             {
                 try
                 {
                     string sEP = sCDN + "/api/web/bbpingress";
-                    System.Net.Http.HttpContent bytesContent = new ByteArrayContent(System.IO.File.ReadAllBytes(sFilePath));
                     using (var httpClient = new System.Net.Http.HttpClient())
                     {
                         using (var request = new HttpRequestMessage(new HttpMethod("POST"), sEP))
@@ -28,7 +27,16 @@ namespace BBPIO
                             httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Key", sAPIKey);
                             httpClient.DefaultRequestHeaders.TryAddWithoutValidation("url", sURL);
                             var multipartContent = new MultipartFormDataContent("Upload----" + DateTime.Now.ToString(System.Globalization.CultureInfo.InvariantCulture));
-                            multipartContent.Add(bytesContent, "file", System.IO.Path.GetFileName(sFilePath));
+                          
+                            if (fDeleteFile)
+                            {
+                                httpClient.DefaultRequestHeaders.TryAddWithoutValidation("delete", "1");
+                            }
+                            else
+                            {
+                                System.Net.Http.HttpContent bytesContent = new ByteArrayContent(System.IO.File.ReadAllBytes(sFilePath));
+                                multipartContent.Add(bytesContent, "file", System.IO.Path.GetFileName(sFilePath));
+                            }
                             request.Content = multipartContent;
                             //ServicePointManager.ServerCertificateValidationCallback += (o, c, ch, er) => true;
                             var oInitialResponse = await httpClient.PostAsync(sEP, multipartContent);
@@ -37,8 +45,9 @@ namespace BBPIO
                         }
                     }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    BBP.Log("UploadFileToSanc::" + ex.Message);
                     return false;
                 }
             }

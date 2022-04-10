@@ -17,7 +17,7 @@ namespace BBPDrive
             return sMP;
         }
 
-        public static void AddOutboundQueue(string sFilePath)
+        public static void AddOutboundQueue(string sFilePath, bool fDelete)
         {
             if (!dOutboundQueue.ContainsKey(sFilePath))
             {
@@ -27,11 +27,17 @@ namespace BBPDrive
             {
                 dOutboundQueue[sFilePath] = UnixTimestamp();
             }
+            if (fDelete)
+            {
+                dOutboundQueue[sFilePath] = 9;
+            }
         }
 
 
         public async static void OutboundThread()
         {
+            System.Threading.Thread.Sleep(3000);
+
             // This thread handles files in the queue that need to go OUT to the sancs...
             string sKey = BBPIO.BBP.Config("apikey");
 
@@ -46,25 +52,45 @@ namespace BBPDrive
                 {
                     foreach (KeyValuePair<string, long> entry in dOutboundQueue)
                     {
-                        long nElapsed = Common.UnixTimestamp() - entry.Value;
-                        if (nElapsed > 10)
+                        if (entry.Value == 9)
                         {
-                            // After ten seconds of idle (this ensures file is not being written to), we shoot out the file to the Sanc, and we clear the timestamp.
+                            // Delete the file
                             dOutboundQueue[entry.Key] = 0;
                             string sSourceFile = BBP.GetMountPoint() + entry.Key;
-                            if (System.IO.File.Exists(sSourceFile))
+                            if (true)
                             {
                                 string sDestURL = NormalizeURL(entry.Key);
-                                bool fSuccess = await BBPIO.BBP.UploadFileToSanc(CDN, sKey, sSourceFile, sDestURL);
+                                bool fSuccess = await BBPIO.BBP.UploadFileToSanc(CDN, sKey, sSourceFile, sDestURL, true);
                                 if (!fSuccess)
                                 {
-                                    //Log("Unable to write file to egress...");
+                                    BBPIO.BBP.Log("Unable to delete file " + sDestURL);
                                 }
                                 bool f1 = false;
                             }
 
-
                         }
+                        else
+                        {
+                            long nElapsed = Common.UnixTimestamp() - entry.Value;
+                            if (nElapsed > 10 && entry.Value != 9)
+                            {
+                                // After ten seconds of idle (this ensures file is not being written to), we shoot out the file to the Sanc, and we clear the timestamp.
+                                dOutboundQueue[entry.Key] = 0;
+                                string sSourceFile = BBP.GetMountPoint() + entry.Key;
+                                if (System.IO.File.Exists(sSourceFile))
+                                {
+                                    string sDestURL = NormalizeURL(entry.Key);
+                                    bool fSuccess = await BBPIO.BBP.UploadFileToSanc(CDN, sKey, sSourceFile, sDestURL, false);
+                                    if (!fSuccess)
+                                    {
+                                        BBPIO.BBP.Log("Unable to write file " + sDestURL + " to egress...");                                    
+                                    }
+                                    bool f1 = false;
+                                }
+
+                            }
+                        }
+                        
                     }
                 }catch(Exception ex)
                 {
@@ -84,6 +110,8 @@ namespace BBPDrive
         public async static void InboundThread()
         {
             // This thread handles files that are in the Sanctuary that need to come INTO the local machine
+            System.Threading.Thread.Sleep(3000);
+
             string sKey = BBPIO.BBP.Config("apikey");
             if (sKey == "")
             {

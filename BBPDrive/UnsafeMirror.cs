@@ -84,7 +84,7 @@ namespace BBPDrive
                 }
             }
             //BBP - Add this file to the outbound queue
-            BBP.AddOutboundQueue(fileName);
+            BBP.AddOutboundQueue(fileName, false);
             return Trace($"Unsafe{nameof(WriteFile)}", fileName, info, DokanResult.Success, "out " + bytesWritten.ToString(),
                 offset.ToString(CultureInfo.InvariantCulture));
         }
