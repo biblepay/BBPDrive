@@ -126,6 +126,10 @@ namespace BBPIO
         public static string Config(string _Key)
         {
             string sPath =  GetAppDataFolder() + "\\bbpdrive.conf";
+            if (!System.IO.File.Exists(sPath))
+            {
+                System.IO.File.WriteAllText(sPath, "");
+            }
             string sData = System.IO.File.ReadAllText(sPath);
             char delimn = "\n"[0];
             char delime = "="[0];
